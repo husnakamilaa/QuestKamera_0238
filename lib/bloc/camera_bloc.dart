@@ -112,5 +112,66 @@ class CameraBloc extends Bloc<CameraEvent, CameraState> {
         }
       }
     
+    void _onDeleteImage(DeleteImage event, Emitter<CameraState> emit) {
+      if (state is! CameraReady) return;
+      final s = state as CameraReady;
+      if (s.imageFile != null) {
+        s.imageFile!.deleteSync();
+      }
+      emit(s.copyWith(
+        ClearSnackbar: true,
+        imageFile: null,
+        snackbarMessage: "Gambar Dihapus",
+      ));
+    }
+
+    void _oncClearSnackbar(ClearSnackbar event, Emitter<CameraState> emit) {
+      if(state is! CameraReady) return;
+      final s = state as CameraReady;
+      emit(s.copyWith(ClearSnackbar: true));
+    }
+
+    Future<void> _setupController(
+      Emitter<CameraState> emit, int index, {CameraReady? previous}) async {
+        if(previous != null) {
+          await previous.controller.dispose();
+        }
+
+        final controller = CameraController(_cameras[index], ResolutionPreset.max);
+        await controller.initialize();
+        await controller.setFlashMode(previous?.flashMode ?? FlashMode.off);
+
+        emit(CameraReady(
+          controller: controller, 
+          selectedIndex: index, 
+          flashMode: previous?.flashMode ?? FlashMode.off, 
+          imageFile: previous?.imageFile, 
+          snackbarMessage: null,
+          ));
+      }
     
+    @override
+    Future<void> close() async{
+      if (state is CameraReady) {
+        await(state as CameraReady).controller.dispose();
+      }
+      return super.close();
+    }
+
+    Future<void> _onRequestPermission(
+      RequestPermission event, Emitter<CameraState> emit) async {
+        Map<Permission, PermissionStatus> statuses = await [
+          Permission.camera,
+          Permission.storage,
+          Permission.manageExternalStorage,
+        ].request();
+
+        final denied = statuses.values.any((status) => status.isDenied || status.isPermanentlyDenied);
+        
+        if(!denied && state is CameraReady) {
+          emit((state as CameraReady).copyWith(
+            snackbarMessage: "Izin kamera dan penyimpanan disetujui",
+          ));
+        }
+      }
 }
