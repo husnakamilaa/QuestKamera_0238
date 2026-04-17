@@ -11,5 +11,10 @@ class StorageHelper {
     return dir.path;
   }
 
-  
+  static Future<File> saveImage(File file, String prefix) async {
+    final dirPath = await _getFolderPath();
+    final fileName = '${prefix}_${DateTime.now().millisecondsSinceEpoch}${path.extension(file.path)}';
+    final savedPath = path.join(dirPath, fileName);
+    return await file.copy(savedPath);
+  }
 }
