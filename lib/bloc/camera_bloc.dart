@@ -60,4 +60,16 @@ class CameraBloc extends Bloc<CameraEvent, CameraState> {
         event.onPictureTaken(File(file.path));
       }
     
+    Future<void> _onTapToFocus(
+      TapToFocus event, Emitter<CameraState> emit) async {
+        if (state is! CameraReady) return;
+        final s = state as CameraReady;
+        final x = event.position.dx / event.previewSize.width;
+        final y = event.position.dy / event.previewSize.height;
+
+        await s.controller.setFocusPoint(Offset(x, y));
+        await s.controller.setExposurePoint(Offset(x, y));
+      }
+    
+    
 }
