@@ -29,6 +29,14 @@ class CameraBloc extends Bloc<CameraEvent, CameraState> {
       _cameras = await availableCameras();
       await _setupController(emit, 0);
     }
+
+    Future<void> _onSwitchCamera(
+    SwitchCamera event, Emitter<CameraState> emit) async {
+      if(state is! CameraBloc) return;
+      final s = state as CameraReady;
+      final next = (s.selectedIndex + 1) %_cameras.length;
+      await _setupController(emit, next, previous: s);
+    }
   
-    
+  
 }
